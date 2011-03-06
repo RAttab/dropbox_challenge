@@ -1,7 +1,7 @@
 /*!
-Author: Rémi Attab
-Date: 5/03/2011
-License: FreeBSD (see LICENSE file).
+\author Rémi Attab
+\date 5/03/2011
+\license FreeBSD (see LICENSE file).
 
 This file contains the solution to the first Dropbox challenge.
 
