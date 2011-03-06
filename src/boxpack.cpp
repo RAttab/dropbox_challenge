@@ -1,5 +1,9 @@
 /*!
+Author: Rémi Attab
+Date: 5/03/2011
+License: FreeBSD (see LICENSE file).
 
+This file contains the solution to the first Dropbox challenge.
 
 How it all works:
 
@@ -27,25 +31,16 @@ adjust any other free boxes that might overlap with the new box.
 We repeat this process until no more boxes can be placed and then it's
 back to step 1) till there's no more boxes to place.
 
-Asymptotically, this algo is O(n^3) but since the free list is kept
+Asymptoticly, this algo is O(n^3) but since the free list is kept
 pretty small, it's probably closer to O(n^2). Not that great but better
 then the O(2^n) naive algo and much nicer results then the various
 greedy algos.
 
-This algo could probably be improved in a couple of ways.
-
-  - Instead of using the greedy algo to places boxes, we could simply
-    use the free box algo all the way. To do this we'd need a good
-    way for it to grow the size of the bin. Can't think of good.
-
-  - Instead of greedily appending boxes from tallest to shortest we could
-    keep the ordering but rotate the boxes. This way this gives us less
-    surface area at the end which could make it easier to minimize the
-    size. Needs to be tested.
-
-  - This is completely unoptimized so there's a couple of areas that could
-    be optimized. One thing would be to use hints when manipulating the 
-    free_list (I've been getting infinit loops and odd behaviour).
+Note that this algorithm could be improved further by using unbounded 
+height as well as width for the free boxes. This would allow use to
+grow our bin both dimensions. This would also require an heuristique
+to determine when to grow horrizontally. This would allow us to also
+expand our solution to other problem type like texture packing.
  */
 
 #include <iostream>  
@@ -227,8 +222,7 @@ struct t_box_pos_comp :
   bool operator() (const t_box& lhs, const t_box& rhs) const {
     if (lhs.x != rhs.x)
       return lhs.x < rhs.x;
-    
-return lhs.y < rhs.y;
+    return lhs.y < rhs.y;
   }
 } box_pos_comp;
 
