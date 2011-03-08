@@ -5,3 +5,4 @@ project(dropbox-ch)
 
 add_executable(boxpack src/boxpack.cpp)
 add_executable(diet src/diet.cpp)
+add_executable(filevents src/filevents.cpp)
