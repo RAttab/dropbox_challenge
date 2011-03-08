@@ -17,7 +17,10 @@
 #include <cstdlib>
 #include <cassert>
 
+
+
 static const std::string SEP("/");
+
 
 
 class t_folder;
@@ -44,10 +47,13 @@ typedef std::list<std::string> t_path;
 typedef t_path::iterator t_path_it;
 typedef t_path::const_iterator t_path_cit;
 
-typedef std::map<std::string, p_file> t_hash_index;
+typedef std::string t_hash;
+
+typedef std::multimap<t_hash, t_path> t_hash_index;
 typedef t_hash_index::value_type t_index_pair;
 typedef t_hash_index::iterator t_index_it;
 typedef t_hash_index::const_iterator t_index_cit;
+
 
 
 struct t_delete_folder : public std::unary_function<p_folder, void> { 
@@ -60,6 +66,8 @@ struct t_delete_event : public std::unary_function<p_event, void> {
   void operator() const (p_event event) {delete event;}
 } delete_event;
 
+
+
 // I find the stl bind function ugly to use so this is better.
 struct t_folder_name_comp : public std::unary_function<p_folder, bool> {
   const std::string m_name;
@@ -71,6 +79,21 @@ struct t_file_name_comp : public std::unary_function<p_file, bool> {
   t_file_name_comp (const std::string name) : m_name (name) {}
   bool operator() const (p_file file) {return file->name() == m_name;}
 };
+
+
+template<Iterator>
+Iterator dec(const Iterator& it) {
+  Iterator copy = it;
+  copy--;
+  return copy;
+}
+
+template <Iterator>
+Iterator inc(const Iterator& it) {
+  Iterator copy = it;
+  copy++;
+  return copy;
+}
 
 
 t_path make_path (const std::string& raw_path) {
@@ -92,8 +115,7 @@ t_path make_path (const std::string& raw_path) {
       path.push_back(SEP);
     }
 
-    base_it = next_it;
-    base_it++;
+    base_it = inc(next_it);
   }
 
   return path;
@@ -110,161 +132,29 @@ std::string path_to_string (const t_path& path) {
   return ss.str();
 }
 
+std::string get_name (const t_path& path) {
+  return *path.rbegin();
+}
 
-struct t_root_folder {} root_folder;
-
-class t_folder {
-  std::string m_name;
-  p_folder m_parent;
-
-  t_folder_list m_child_folders;
-  t_file_list m_child_files;
-  t_event_list m_events;
-
-  // Equivalent of boost::noncopyable.
-  t_folder() {}
-  t_folder(const t_folder& src) {}
-  bool operator= (const t_folder& src) {}
+t_path get_parent (const t_path& path) {
+  assert (!path.empty());
+  return t_path(path.begin(), dec(path.end()));
+}
 
 
-public:
-
-  t_folder(const t_root_folder& root_folder) :
-    m_name(SEP), m_parent(NULL),
-    m_child_folders(), m_child_files(), m_events()
-  {}
-
-  t_folder(const std::string& name, p_folder parent) :
-    m_name(name), m_parent(parent),
-    m_child_folders(), m_child_files(), m_events()
-  {
-    assert(m_parent);
-  }
-
-  ~t_folder() {
-    std::for_each(m_child_folders.begin(), m_child_folders.end(), delete_folder);
-    std::for_each(m_child_files.begin(), m_child_files.end(), delete_file);
-    std::for_each(m_events.begin(), m_events.end(), delete_event);
-  }
-
-  std::string name() const {return m_name;}
-  t_path path() const {
-    t_path cur_path;
-    path(cur_path);
-    return cur_path;
-  }
-
-
-  bool has_parent() const {return m_parent != NULL;}
-  m_parent parent() const {return m_parent;}
-
-  t_folder_list& child_folders() {return m_child_folders;}
-  const t_folder_list& child_folders() const {return m_child_folders;}
-
-  t_file_list& child_files() {return m_child_files;}
-  const t_file_list& child_files() const {return m_child_files;}
-
-  t_event_list& events() {return m_events;}
-  const t_event_list& events() const {return m_events;}
-
-  p_folder find_folder(t_path_cit start, t_path_cit end) const {
-    if (start == end)
-      return this;
-
-    t_folder_name_comp comp (*start);
-    t_folder_cit folder_it = 
-      std::find_if (m_child_folders.begin(), m_child_folders.end(), comp);
-    
-    if (folder_it == m_child_folders.end())
-      return NULL;
-
-    t_path_cit next = start;
-    next++;
-    return (*folder_it)->find_folder(next, end);
-  }
-
-
-  p_file find_file(t_path_cit start, t_path_cit end) const {
-    assert(start != end);
-
-    t_path_cit filename_it = end;
-    filename_it--;
-
-    p_folder parent_folder = find_folder(start, filename_it);
-    if (parent_folder == NULL)
-      return NULL;
-    
-    t_file_name_comp comp (*filename_it);
-    t_file_cit file_it = std::find_if (m_child_files.begin(), m_child_files.end(), comp);
-    if (file_it == m_child_files.end())
-      return NULL;
-
-    return *file_it;
-  }
-
-
-private : 
-
-  void path(t_path& cur_path) const {
-    if (m_parent) {
-      m_parent->path(cur_path);
-    }
-    cur_path.push_back(m_name);
-  }
-
-};
-
-
-class t_file {
-
-  std::string m_name;
-  std::string m_hash;
-  p_folder m_parent;
-  t_event_list m_events;
-
-  // Equivalent of boost::noncopyable.
-  t_file() {}
-  t_file(const t_file& src) {}
-  bool operator= (const t_file& src) {}
-
-
-public :  
-  
-  t_file(const std::string& name, const std::string& hash, p_folder parent) :
-    m_name(name), m_hash(hash), m_parent(parent), m_events()
-  {
-    assert(m_parent);
-  }
-
-  ~t_file() {
-    std::for_each(m_events.begin(), m_events.end(), delete_event);
-  }
-
-  std::string name() const {return m_name;}
-  t_path path() const {
-    t_path cur_path = m_parent->path();
-    cur_path.push_back(m_name);
-    return cur_path;
-  }
- 
-  p_folder parent() const {return m_parent;}
-
-  t_event_list& events() {return m_events;}
-  const t_event_list& () const {return m_events;}
-
-};
 
 
 class t_algo_state {
+
   // Equivalent of boost::noncopyable.
-  t_file() {}
-  t_file(const t_file& src) {}
-  bool operator= (const t_file& src) {}
+  t_algo_state() {}
+  t_algo_state(const t_algo_state& src) {}
+  bool operator= (const t_algo_state& src) {}
 
 public :
   
-  t_folder root (root_folder);
   t_hash_index hash_index;
+  t_event_list events;
 
 };
 
@@ -277,55 +167,247 @@ enum t_event_type {
   e_copy
 };
 
+enum t_file_type {
+  e_file,
+  e_folder
+};
+
+
+
 struct t_event { 
-  t_event_type type;
-  t_event(t_event_type t) : type(t) {}
+
+  t_file_type file_type;
+  t_event_type event_type;
+
+  t_event(t_file_type f, t_event_type ev) : 
+    file_type(f), event_type(ev) 
+  {}
 
   virtual ~t_event() {} 
 };
 
+
 struct t_event_new : public t_event { 
-  t_event_new() : t_event::t_event(e_new) {}
+  t_path path;
+  t_hash hash;
+  t_event_new(t_file_type f, const t_path& p, t_hash h = "") : 
+    t_event::t_event(f, e_new), path(p), hash(h)
+  {}
 };
 
 struct t_event_delete : public t_event { 
-  t_event_delete() : t_event::t_event(e_delete) {}
+  t_path path;
+  t_hash hash;
+  t_event_delete(t_file_type f, const t_path& p, const t_hash& h) : 
+    t_event::t_event(f, e_delete), path(p), hash(h)
+  {}
 };
 
 struct t_event_modify : public t_event {
-  std::string new_hash;
-  t_event_modify(const std::string& hash) : 
-    t_event::t_event(e_modify), new_hash(hash) 
+  t_path path;
+  t_hash old_hash;
+  t_hash new_hash;
+
+  t_event_modify(t_file_type f, 
+		 const t_path& p, 
+		 const t_hash& old_h, 
+		 const t_hash& new_h) : 
+    t_event::t_event(f, e_modify), path(p), old_hash(old_h), new_hash(new_h) 
   {}
 };
 
 struct t_event_move : public t_event {
   t_path old_path;
-  t_event_move(const t_path& path):
-    t_event::t_event(e_move), old_path(path)
+  t_path new_path;
+
+  t_event_move(t_file_type f, const t_path& old_p, const t_path& new_p)
+    t_event::t_event(e_move), old_path(old_p), new_path(new_p)
   {}
+  bool is_rename() const { return get_name(old_path) != get_name(new_path);}
+  bool is_move() const { return get_parent(old_path) != get_parent(new_path);}
 };
 
 struct t_event_copy : public t_event {
-  t_path old_path;
-  t_event_copy(const t_path& path) :
-    t_event::t_event(e_copy), old_path(path)
+  t_path src_path;
+  t_path dest_path;
+  
+  t_event_copy(t_file_type f, const t_path& src_p, const t_path& dest_p) :
+    t_event::t_event(f, e_copy), src_path(src_p), dest_path(dest_p)
   {}
 };
 
 
 
-void add_file_to_state (t_algo_state& state, const t_event& ev, const& t_path path);
-void add_folder_to_state (t_algo_state& state, const t_event& ev, const& t_path path, std::string hash);
+void add_to_state (t_algo_state& state, p_event ev);
 void simplify_state (t_algo_state& state);
+void print_state (t_algo_state& state);
 
 void read_events (t_algo_state& state);
 void run_tests ();
 
 int main (int argc, char** argv) {
+  if (argc > 1) {
+    run_tests();
+  }
+  else {
+    t_algo_state state;
+    read_events (state);
+    simplify_state (state);
+    print_state (state);
+  }
+  return 0;
+}
+
+
+
+
+void remove_event (t_aglo_state& state, t_event_it start, t_event_it end) {
+  t_event_it it = start;
+  while (it != end) {
+    it = remove_event(state, it);
+  }
+}
+
+// Will delete the event at the iterator so don't use it afterwards.
+t_event_it remove_event (t_algo_state& state, t_event_it it) {
+  p_event ev = *it;
+  t_event_it next_it = state.events.erase(it);
+  delete ev; // Should really be handled by boost::shared_ptr...
+  return next_it;
+}
+
+
+void remove_from_index (t_algo_state& state, const t_hash& key, const t_path& value){
+  const t_index_it start = state.hash_index.upper_bound(key);
+  const t_index_it end = state.hash_index.lower_bound(key);
+  assert(start != state.hash_index.end());
+
+  for (t_index_it it = start; it != end; it++) {
+    if (it->second == value) {
+      state.hash_index.erase(it);
+      break;
+    }
+  }
+}
+
+void add_to_state (t_algo_state& state, p_event ev) {
+  // We process folder events later to avoid mix ups with file events.
+  if (ev->file_type == e_folder) {
+    state.events.push_back(ev);
+    return;
+  }
   
+  t_event_it prev_ev_it = state.event.rbegin();
+  p_event prev_ev = *prev_ev_it;
+
+  if (prev_ev->file_type == e_file && ev->event_type == e_new) {
+    const t_event_new* new_ev = static_cast<t_event_new*> (ev);
+
+    if (prev_ev->event_type == e_delete) {
+      const t_event_delete* prev_del_ev = static_cast<t_event_delete*>(prev_ev);
+
+      // Move event
+      if (prev_del_ev->hash == new_ev->hash) {
+	p_event move_ev = new t_event_move(e_file, prev_del_ev->path, new_ev->path);
+	state.events.push_back(move_ev);
+
+	remove_event(state, prev_ev_it);
+	prev_ev_it = state.event.end();
+	prev_ev = NULL;
+      }
+
+      // Modify event
+      else if (prev_del_ev->path == new_ev->path) {
+	p_event modify_ev = 
+	  new t_event_modify(e_file, new_ev->path, prev_del_ev->hash, new_ev->hash);
+	state.events.push_back(modify_ev);
+
+	remove_event(state, prev_ev_it);
+	prev_ev_it = state.event.end();
+	prev_ev = NULL;
+      }
+
+    }
+    else {
+      t_hash_it hash_it = state.hash_index.find(new_ev->hash);
+
+      //Copy event
+      if (hash_it != state.hash_index.end()) {
+	p_event copy_ev = new t_event_copy(e_file, hash_it->second, new_ev->path);
+      }
+      
+    }    
+    
+  }
+  // Nothing special, just add the event.
+  else {
+    state.events.push_back(ev);
+  }
+
+  if (ev->file_type = e_file) {
+
+    // No matter what happened above, if a new event comes in for a file
+    //   Then something changed so we need to update the index.
+    if (ev->event_type == e_new) {
+      const t_event_new* new_ev = static_cast<t_event_new*> (ev);
+      state.hash_index[new_ev->hash] = new_ev->path;
+    }
+
+    else if (ev->event_type == e_delete) {
+      const t_event_delete* del_ev = static_cast<t_event_delete*> (ev);
+      remove_from_index(state, del_ev->hash, del_ev->path);
+    }
+  }
 
 }
 
 
 
+
+
+
+
+
+std::string read_token () {
+  char c;
+  std::cin >> c;
+  
+  std::string buf;
+
+  while (c != ' ' || c != '\n') {
+    buf += c;
+    std::cin >> c;
+  };
+
+  return buf;
+}
+
+
+void read_events (t_algo_state& state) {
+  static const std::string ADD_EV = "ADD";
+  static const std::string DEL_EV = "DEL";
+  static const std::string NULL_HASH = "-";
+
+
+  int nb_events;
+  std::cin >> nb_events;
+
+  for (int i = 0; i < nb_events; ++i) {
+
+    std::string ev = read_token();
+    t_path path = make_path(read_token());
+    std::string hash = read_token();
+
+    t_file_type file_type = hash == NULL_HASH ? e_folder : e_file;
+
+    p_event ev;
+    if (ev == ADD_EV)
+      ev = new t_event_new (file_type, path, hash);
+    else if (ev == DEL_EV)
+      ev = new t_event_delete (file_type, path, hash);
+    else
+      assert(false || "Unknown event");
+
+    add_to_state(state, ev);
+  }
+}
