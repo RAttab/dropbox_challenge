@@ -179,11 +179,17 @@ struct t_event {
   t_file_type file_type;
   t_event_type event_type;
 
+  virtual ~t_event() {} 
+
+
+protected :
+
   t_event(t_file_type f, t_event_type ev) : 
     file_type(f), event_type(ev) 
   {}
 
-  virtual ~t_event() {} 
+  virtual void print() = 0;
+  std::string get_type_name() {return file_type == e_file ? "file" : "folder";}
 };
 
 
@@ -193,6 +199,13 @@ struct t_event_new : public t_event {
   t_event_new(t_file_type f, const t_path& p, t_hash h = "") : 
     t_event::t_event(f, e_new), path(p), hash(h)
   {}
+
+  virtual void print() {
+    printf("Created the %s \"%s\" in folder \"%s\".\n",
+	   get_type_name().c_str(), 
+	   get_name(path).c_str(), 
+	   get_parent(path).c_str());
+  }
 };
 
 struct t_event_delete : public t_event { 
@@ -201,6 +214,12 @@ struct t_event_delete : public t_event {
   t_event_delete(t_file_type f, const t_path& p, const t_hash& h) : 
     t_event::t_event(f, e_delete), path(p), hash(h)
   {}
+  virtual void print() {
+    printf("Deleted the %s \"%s\" in folder \"%s\".\n",
+	   get_type_name().c_str(), 
+	   get_name(path).c_str(), 
+	   get_parent(path).c_str());
+  }
 };
 
 struct t_event_modify : public t_event {
@@ -214,6 +233,13 @@ struct t_event_modify : public t_event {
 		 const t_hash& new_h) : 
     t_event::t_event(f, e_modify), path(p), old_hash(old_h), new_hash(new_h) 
   {}
+  virtual void print() {
+    printf("Modified the %s \"%s\" in folder \"%s\". The new hash value is \"%s\".\n",
+	   get_type_name().c_str(), 
+	   get_name(path).c_str(), 
+	   get_parent(path).c_str(), 
+	   new_hash.c_str());
+  }
 };
 
 struct t_event_move : public t_event {
@@ -225,6 +251,35 @@ struct t_event_move : public t_event {
   {}
   bool is_rename() const { return get_name(old_path) != get_name(new_path);}
   bool is_move() const { return get_parent(old_path) != get_parent(new_path);}
+
+  virtual void print() {
+    if (is_rename() && is_move()) {
+      printf("Moved the %s \"%s\" in folder \"%s\" to the folder \"%s\" with the name \"%s\".\n",
+	     get_type_name().c_str(), 
+	     get_name(old_path).c_str(), 
+	     get_parent(old_path).c_str(), 
+	     get_parent(new_path).c_str(),
+	     get_name(new_path).c_str());
+    }
+
+    else if (is_rename()) {
+      printf("Renamed the %s \"%s\" in folder \"%s\" to \"%s\".\n",
+	     get_type_name().c_str(), 
+	     get_name(old_path).c_str(), 
+	     get_parent(old_path).c_str(), 
+	     get_name(new_path).c_str());
+    }
+
+    else if (is_move()) {
+      printf("Moved the %s \"%s\" in folder \"%s\" to the folder \"%s\".\n",
+	     get_type_name().c_str(), 
+	     get_name(old_path).c_str(), 
+	     get_parent(old_path).c_str(), 
+	     get_parent(new_path).c_str());
+    }
+
+  }
+
 };
 
 struct t_event_copy : public t_event {
@@ -234,6 +289,13 @@ struct t_event_copy : public t_event {
   t_event_copy(t_file_type f, const t_path& src_p, const t_path& dest_p) :
     t_event::t_event(f, e_copy), src_path(src_p), dest_path(dest_p)
   {}
+  virtual void print() {
+    printf("Copied the %s \"%s\" from the folder \"%s\" to the folder \"%s\".\n",
+	   get_type_name().c_str(), 
+	   get_name(src_path).c_str(), 
+	   get_parent(src_path).c_str(), 
+	   get_parent(dest_path).c_str());
+  }
 };
 
 
@@ -364,6 +426,17 @@ void add_to_state (t_algo_state& state, p_event ev) {
 
 
 
+void simplify_state (t_algo_state& state) {
+
+}
+
+
+
+void print_state (t_algo_state& state) {
+  for (t_event_it it = state.events.begin(); it != state.events.end(); ++it) {
+    it->print();
+  }
+}
 
 
 
