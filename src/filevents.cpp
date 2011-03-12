@@ -83,22 +83,10 @@ static const std::string NULL_HASH("-");
  * Typedefs
  ******************************************************************************/
 
-class t_folder;
-class t_file;
+struct t_algo_state;
+
 struct t_event;
-
-typedef t_folder* p_folder;
-typedef t_file* p_file;
 typedef t_event* p_event;
-
-
-typedef std::list<p_folder> t_folder_list;
-typedef t_folder_list::iterator t_folder_it;
-typedef t_folder_list::const_iterator t_folder_cit;
-
-typedef std::list<p_file> t_file_list;
-typedef t_file_list::iterator t_file_it;
-typedef t_file_list::const_iterator t_file_cit;
 
 typedef std::list<std::string> t_path;
 typedef t_path::iterator t_path_it;
@@ -388,30 +376,6 @@ struct t_event_copy : public t_event {
 
 
 /*******************************************************************************
- * t_algo_state
- ******************************************************************************/
-
-class t_algo_state {
-
-  // Equivalent of boost::noncopyable.
-  t_algo_state(const t_algo_state& src) {}
-  bool operator= (const t_algo_state& src) {}
-
-public :
-  t_algo_state () : hash_index(), events() {}
-
-  t_event_list events;
-
-  // Used to detect copy file events.
-  t_hash_index hash_index;
-
-  // Used to detect copy folder events.
-  t_tree_index tree_index;
-
-};
-
-
-/*******************************************************************************
  * Prototypes
  ******************************************************************************/
 
@@ -427,6 +391,33 @@ void print_index (t_algo_state& state);
 void print_tree (const t_tree& tree);
 t_event_it remove_event (t_algo_state& state, t_event_it it);
 t_event_it remove_event (t_algo_state& state, t_event_it start, t_event_it end);
+
+
+/*******************************************************************************
+ * t_algo_state
+ ******************************************************************************/
+
+class t_algo_state {
+
+  // Equivalent of boost::noncopyable.
+  t_algo_state(const t_algo_state& src) {}
+  bool operator= (const t_algo_state& src) {}
+
+public :
+  t_algo_state () : hash_index(), events() {}
+  ~t_algo_state() {
+    remove_event(*this, events.begin(), events.end());
+  }
+
+  t_event_list events;
+
+  // Used to detect copy file events.
+  t_hash_index hash_index;
+
+  // Used to detect copy folder events.
+  t_tree_index tree_index;
+
+};
 
 
 /*******************************************************************************
