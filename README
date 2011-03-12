@@ -1,3 +1,23 @@
+This project all three solutions to the dropbox challenges. The questions can be found at
+this URL: http://www.dropbox.com/jobs/challenges
 
-Project that will eventually contain all three of my drop box challenge answers.
+The project is built using a barebone CMake configuration so the following lines will
+build everything for you:
+    
+    cmake CMakeLists.txt
+    make
 
+This will generate the three executable for each challenge :
+     
+    boxpack -> First challenge
+    filevents -> Second challenge
+    diet -> Third challenge
+
+Just execute them with input from the command line, just execute them as is. The
+executables also contains some tests that can be run by adding any arguments.
+
+    ./boxpack 1
+    ./filevents 1
+    ./diet 1
+
+Code is provided under the FreeBSD license. See the LICENSE file for full details.

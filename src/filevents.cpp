@@ -4,6 +4,48 @@
 \data TBD
 \license FreeBSD (see LICENSE file).
 
+This program takes a stream of basic file events and transforms it into a series of
+high level events (eg. move, rename, copy...).
+
+Considering the vagueness of the original question, we worked with a few assumptions:
+
+  - It's difficult to achieve user friendly-ness without an actual target user so
+    this program uses the "plain english" part of the question for it's output.
+    Note that modifying the output to suit any type of user is quite trivial (see
+    the print() functions in the t_event structs).
+
+  - We assume that the event stream is a strict substream of a larger event stream.
+    Given this assumption, detecting folder copy is prone to false negatives/positives.
+    For that we reason, we don't detect it.
+
+  - We currently assume that the input events are ordered by their timestamp.
+
+  - We assume that only one higher level event can be executed at any time. For example,
+    if two folder moves are executed then all the event for the first move will be present
+    before all the events for the second move (as oposed to the events being interleaved).
+
+  - We assume that we need to display a history of all manipulations and not just the
+    end result like a diff. This means that a single file being moved twice won't
+    be simplified to a single move event.
+
+
+Given those assumptions, here are the operations supported:
+
+  - Move file and folder.
+  - Rename file and folder.
+  - Copy file.
+  - Delete folder (collapses multiple delete events for a folder).
+
+
+The runtime of the algorithm is O(n^2 m log n) where m is the average size of the string.
+Note that this upper bound will only happen if you have folder depths that are a function
+of the number of events. This should be quite rare in practice and folder depth should
+stay relatively small and constant. If that's the case then the runtime is closer to
+O(n log n) which is much better.
+
+Final note, I'm pretty sure there's quite a lot of bugs lurking in this code. I don't
+have the time to write a full suite of proper tests for it.
+
  */  
 
 #include <iostream>
