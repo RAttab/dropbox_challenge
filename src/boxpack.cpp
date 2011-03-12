@@ -146,8 +146,8 @@ void run_tests () {
     srand(0);
     t_box_list list;
     for (int i = 0; i < 100; ++i) {
-      int w = rand() % 17 + 3;
-      int h = rand() % 17 + 3;
+      int w = rand() % 47 + 3;
+      int h = rand() % 47 + 3;
       list.push_back(t_box(w,h));
     }
     run_packer(list);
@@ -197,7 +197,7 @@ int main (int argc, char** argv) {
 
 
 
-//! \brief Sorts by placing tallest boxes first.
+//! Sorts by placing tallest boxes first.
 struct t_box_ref_height_comp : 
   public std::binary_function<t_box_it, t_box_it, bool>
 {
@@ -215,7 +215,7 @@ typedef t_box_ref_list::iterator t_box_ref_it;
 
 
 
-//! \brief Orders by box position
+//! Orders by box position
 struct t_box_pos_comp :
   public std::binary_function<t_box, t_box, bool>
 {
@@ -239,7 +239,7 @@ void place_box_free_list (t_box_ref_list& box_queue, t_free_list& free_list, con
 void extend_bin (t_box& bin, const t_box& new_box);
 
 
-///! Main loop of the algorithm. Nothing too fancy so just read it.
+//! Main loop of the algorithm. Nothing too fancy so just read it.
 t_box pack_boxes (t_box_list& box_list) {
   
   t_box_ref_list box_queue;
@@ -393,9 +393,7 @@ free_list_search (t_box_ref_list& box_queue, t_free_list& free_list, const t_box
   return std::make_pair(found_free, found_box);
 }
 
-/*!
-Updates the free list to take into account the added block.
- */
+//! Updates the free list to take into account the added block.
 void free_list_update (t_free_it free_it, const t_box_it& queue_box, t_free_list& free_list, const t_box& bin) {
   t_free_it old_free = free_it;
   int new_free_x = queue_box->right();
@@ -480,9 +478,7 @@ void set_free_y (t_free_it free_it, t_free_list& free_list, int new_y) {
 
 
 
-/*!
-Reads some user input.
- */
+//! Reads some user input.
 bool read_boxes (t_box_list& out_list) {
 
   int box_count = 0;
@@ -509,7 +505,7 @@ The output will look pretty lopsided since the - char is much smaller
  */
 void print_boxes (const t_box_list& box_list, const t_box& bin) {
   
-  ///  std::cerr << std::endl << "Bin(" << bin.width << ", " << bin.height << ")" << std::endl;
+  // std::cerr << std::endl << "Bin(" << bin.width << ", " << bin.height << ")" << std::endl;
 
   t_2d_array print_scr;
   print_scr.resize(bin.width);

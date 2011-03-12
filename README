@@ -1,5 +1,7 @@
 This project all three solutions to the dropbox challenges. The questions can be found at
-this URL: http://www.dropbox.com/jobs/challenges
+this URL: 
+
+     http://www.dropbox.com/jobs/challenges
 
 The project is built using a barebone CMake configuration so the following lines will
 build everything for you:
@@ -20,4 +22,10 @@ executables also contains some tests that can be run by adding any arguments.
     ./filevents 1
     ./diet 1
 
-Code is provided under the FreeBSD license. See the LICENSE file for full details.
+Note that both the boxpack and the diet solution have extra debugging information that
+are dumped into the std err stream. These can be filtered out like so:
+
+    ./boxpack 1 2> /dev/null
+    ./diet 1 2> /dev/null
+
+The code is provided under the FreeBSD license. See the LICENSE file for full details.
