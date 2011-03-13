@@ -19,6 +19,10 @@ positive node or negative node.
  */
 
 
+/*******************************************************************************
+ * Includes
+ ******************************************************************************/
+
 #include <iostream>
 #include <sstream>
 
@@ -31,7 +35,9 @@ positive node or negative node.
 #include <cstdio>
 
 
-// Typedef hell
+/*******************************************************************************
+ * Typedefs
+ ******************************************************************************/
 
 typedef int t_activity_id;
 typedef int t_cvalue; // short for caloric_value.
@@ -52,7 +58,9 @@ typedef std::map<t_cvalue, t_node> t_cvalue_table;
 typedef t_cvalue_table::value_type t_cvalue_table_pair;
 
 
-
+/*******************************************************************************
+ * struct t_node 
+ ******************************************************************************/
 
 //! Represents either a positive or negative entry in the DP memoization table.
 struct t_node {
@@ -78,15 +86,31 @@ struct t_node {
 };
 
 
-//If using boost would be a boost::noncopyable.
-struct t_algo_state {
+/*******************************************************************************
+ * class t_algo_state 
+ ******************************************************************************/
+
+//! Holds the state of the algo.
+class t_algo_state {
+
+  // Equivalent of boost::noncopyable.
+  t_algo_state(const t_algo_state& src) {}
+  t_algo_state& operator= (const t_algo_state& src) {}
+
+public:
+
+  t_algo_state() : plus_map(), minus_map(), name_map() {}
+
   t_cvalue_map plus_map;
   t_cvalue_map minus_map;
   t_name_map name_map;
+
 };
 
 
-// Prototypes
+/*******************************************************************************
+ * Prototypes
+ ******************************************************************************/
 
 void run_tests ();
 void add_to_state (t_algo_state& state, 
@@ -104,6 +128,10 @@ std::pair<bool, t_activity_set> process_node (const t_cvalue_map& cvalue_map,
 					      const t_node& cur_node);
 
 
+/*******************************************************************************
+ * Entry Point
+ ******************************************************************************/
+
 int main (int argc, char** argv) {
   if (argc > 1) {
     run_tests();
@@ -119,10 +147,14 @@ int main (int argc, char** argv) {
 }
 
 
+/*******************************************************************************
+ * Solver 
+ ******************************************************************************/
+
 /*!
-DP solver for our problem which progressively scans the DP table for new nodes 
+  DP solver for our problem which progressively scans the DP table for new nodes 
   to process. It does both positive and negative nodes at the same time.
- */
+*/
 t_activity_set sum_to_zero (const t_algo_state& state) {
   t_cvalue_table table; // DP memoization table.  
   
@@ -165,19 +197,18 @@ t_activity_set sum_to_zero (const t_algo_state& state) {
 } 
 
 
-
 /*!
-Takes a node in the table and creates a series of new permutations by adding a
+  Takes a node in the table and creates a series of new permutations by adding a
   new unused value from the provided \c cvalue_map.
 
-If one of the newly created permutations sums up to an existing value and if that
+  If one of the newly created permutations sums up to an existing value and if that
   node has a different is_positive value then the existing node then we have found
   our solution.
- */
+*/
 std::pair<bool, t_activity_set> process_node (const t_cvalue_map& cvalue_map, 
-					t_cvalue_table& table, 
-					const t_cvalue cur_cvalue, 
-					const t_node& cur_node) 
+					      t_cvalue_table& table, 
+					      const t_cvalue cur_cvalue, 
+					      const t_node& cur_node) 
 {
   // For every activity not already done.
   for (t_cvalue_cit cval_it = cvalue_map.begin(); cval_it != cvalue_map.end(); ++cval_it) {
@@ -225,12 +256,17 @@ std::pair<bool, t_activity_set> process_node (const t_cvalue_map& cvalue_map,
 }
 
 
+/*******************************************************************************
+ * Utilities
+ ******************************************************************************/
+
 //! Removes and returns the first value off the table.
 t_cvalue_table_pair pop_first (t_cvalue_table& table) {
   t_cvalue_table_pair pair = *table.begin();
   table.erase(table.begin());
   return pair;
 }
+
 
 //! Used to add an entry to the t_algo_state struct.
 void add_to_state (t_algo_state& state, 
@@ -253,6 +289,10 @@ void add_to_state (t_algo_state& state,
 }
 
 
+/*******************************************************************************
+ * I/O 
+ ******************************************************************************/
+
 //! Prints magical rainbows and unicorns also known as the solution.
 void print_solution (t_algo_state& state, const t_activity_set& solution) {
   if (solution.size() == 0) {
@@ -264,12 +304,12 @@ void print_solution (t_algo_state& state, const t_activity_set& solution) {
     std::cout << state.name_map[*act_it] << " ";
 
     /* The specs states that only the name is printed.
-    if (state.plus_map.find(*act_it) != state.plus_map.end()) {
-      std::cout << state.plus_map[*act_it];
-    }
-    else if (state.minus_map.find(*act_it) != state.minus_map.end()) {
-      std::cout << "-" << state.minus_map[*act_it];
-    }
+       if (state.plus_map.find(*act_it) != state.plus_map.end()) {
+       std::cout << state.plus_map[*act_it];
+       }
+       else if (state.minus_map.find(*act_it) != state.minus_map.end()) {
+       std::cout << "-" << state.minus_map[*act_it];
+       }
     */
 
     std::cout << std::endl;
@@ -302,6 +342,9 @@ void read_values (t_algo_state& state) {
 }
 
 
+/*******************************************************************************
+ * Tests
+ ******************************************************************************/
 
 //! generates a name for an activity id.
 std::string mkname (int id) {
@@ -369,6 +412,5 @@ void run_tests () {
     }
     print_solution(state, sum_to_zero(state));
   }
-
 
 }

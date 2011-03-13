@@ -42,7 +42,7 @@ Given those assumptions, here are the operations supported:
 
 The runtime of the algorithm is O(n^2 m log n) where m is the average size of the string.
 Note that this upper bound will only happen if you have folder depths that are a function
-of the number of events. This should be quite rare in practice and folder depth should
+vof the number of events. This should be quite rare in practice and folder depth should
 stay relatively small and constant. If that's the case then the runtime is closer to
 O(n log n) which is much better.
 
@@ -137,7 +137,7 @@ enum t_file_type {
 
 
 /*******************************************************************************
- * Random utilities
+ * Iterator utilities
  ******************************************************************************/
 
 template <typename Iterator>
@@ -146,6 +146,7 @@ Iterator dec(const Iterator& it) {
   copy--;
   return copy;
 }
+
 
 template <typename Iterator>
 Iterator inc(const Iterator& it) {
@@ -168,7 +169,7 @@ std::string path_to_string (const t_path_cit start, const t_path_cit end);
 
 
 /*******************************************************************************
- * t_event structs
+ * struct t_event
  ******************************************************************************/
 
 struct t_event { 
@@ -191,11 +192,16 @@ protected :
 };
 
 
+/*******************************************************************************
+ * t_event Utilities
+ ******************************************************************************/
+
 struct t_event_set_comp : public std::binary_function<p_event, p_event, bool> {
   bool operator() (const p_event lhs, const p_event rhs) const {
     return lhs->timestamp < rhs->timestamp;
   }
 };
+
 
 typedef std::multiset<p_event, t_event_set_comp> t_event_list;
 typedef t_event_list::iterator t_event_it;
@@ -218,7 +224,7 @@ bool operator== (const t_event_list& lhs, const t_event_list& rhs) {
 
 
 /*******************************************************************************
- * t_event_new
+ * struct t_event_new
  ******************************************************************************/
 
 struct t_event_new : public t_event { 
@@ -251,7 +257,7 @@ struct t_event_new : public t_event {
 
 
 /*******************************************************************************
- * t_event_delete
+ * struct t_event_delete
  ******************************************************************************/
 
 struct t_event_delete : public t_event { 
@@ -274,7 +280,7 @@ struct t_event_delete : public t_event {
 
 
 /*******************************************************************************
- * t_event_modify
+ * struct t_event_modify
  ******************************************************************************/
 
 struct t_event_modify : public t_event {
@@ -301,7 +307,7 @@ struct t_event_modify : public t_event {
 
 
 /*******************************************************************************
- * t_event_move
+ * struct t_event_move
  ******************************************************************************/
 
 struct t_event_move : public t_event {
@@ -316,7 +322,7 @@ struct t_event_move : public t_event {
   bool is_move() const { return get_parent(old_path) != get_parent(new_path);}
 
   virtual void print() {
-      if (is_rename() && is_move()) {
+    if (is_rename() && is_move()) {
       printf("Moved the %s \"%s\" in the folder \"%s\" to the folder \"%s\" with the name \"%s\".\n",
 	     get_type_name().c_str(), 
 	     get_name(old_path).c_str(), 
@@ -341,10 +347,9 @@ struct t_event_move : public t_event {
 	     path_to_string(get_parent(new_path)).c_str());
     }
     
-    else {  
-      std::cout << "ASSERT - from \"" << path_to_string(old_path) << 
-	"\" to \"" << path_to_string(new_path) << std::endl;
-      assert(false && "Move event is not a move or rename");
+    else { 
+      // We do nothing in this case since we removed and added the same file
+      //  at the same spot with the same hash.
     }
 
   }
@@ -353,7 +358,7 @@ struct t_event_move : public t_event {
 
 
 /*******************************************************************************
- * t_event_copy
+ * struct t_event_copy
  ******************************************************************************/
 
 struct t_event_copy : public t_event {
@@ -394,7 +399,7 @@ t_event_it remove_event (t_algo_state& state, t_event_it start, t_event_it end);
 
 
 /*******************************************************************************
- * t_algo_state
+ * struct t_algo_state
  ******************************************************************************/
 
 class t_algo_state {
@@ -471,8 +476,9 @@ bool simplify_to_move_event(t_algo_state& state, p_event ev, t_event_it prev_ev_
   return false;
 }
 
+
 /*!
-Takes a DEL and an ADD event and reduces them to a MODIFY event if only the hash 
+  Takes a DEL and an ADD event and reduces them to a MODIFY event if only the hash 
   has changed.
 */
 bool simplify_to_modify_event(t_algo_state& state, p_event ev, t_event_it prev_ev_it) {
@@ -504,8 +510,8 @@ bool simplify_to_modify_event(t_algo_state& state, p_event ev, t_event_it prev_e
   }
 
   return false;
-
 }
+
 
 //! Replaces an ADD event by a COPY event if the file's hash is in the index.
 bool simplify_to_copy_event(t_algo_state& state, p_event ev) {
@@ -530,13 +536,14 @@ bool simplify_to_copy_event(t_algo_state& state, p_event ev) {
   return false;
 }
 
+
 /*!
-Adds the given event to the event list and tries to simplify it to an higher order event
+  Adds the given event to the event list and tries to simplify it to an higher order event
   if possible. Note that it only attempts to reduce file events. Folder event
   simplifications are handled by the function simplify_state().
 
-This function assumes that the events are given in their proper timetamp order.
- */
+  This function assumes that the events are given in their proper timetamp order.
+*/
 void add_to_state (t_algo_state& state, p_event ev) {
   // We process folder events later to avoid mix ups with file events.
   if (ev->file_type == e_folder) {
@@ -596,9 +603,9 @@ void add_to_state (t_algo_state& state, p_event ev) {
  ******************************************************************************/
 
 /*!
-Simplifies a redundant DEL event into a single DEL event. A DEL event is redundant if
+  Simplifies a redundant DEL event into a single DEL event. A DEL event is redundant if
   it is followed by a DEL event on a folder that is a prefix of the current DEL event.
- */
+*/
 bool simplify_folder_delete (t_algo_state& state, t_event_it prev_it, t_event_it cur_it) {
   p_event prev_ev = *prev_it;
   p_event cur_ev = *cur_it;
@@ -677,13 +684,14 @@ find_add_bounds (t_algo_state& state, t_event_it start, t_event_it end) {
   return std::make_pair(ev_it, subtree);
 }
 
+
 /*!
-Simplifies a folder DEL event and a range of ADD event to a single MOVE event if the
+  Simplifies a folder DEL event and a range of ADD event to a single MOVE event if the
   affected files are the same.
 */
 t_event_it simplify_to_folder_move (t_algo_state& state, 
-				 t_event_it prev_it, 
-				 t_event_it cur_it)
+				    t_event_it prev_it, 
+				    t_event_it cur_it)
 {
   
   if ((*prev_it)->event_type != e_delete || (*cur_it)->event_type != e_new)
@@ -724,9 +732,9 @@ t_event_it simplify_to_folder_move (t_algo_state& state,
 
 
 /*!
-Iterates throught the event list looking for folder events to simplify.
+  Iterates throught the event list looking for folder events to simplify.
 
-Note that if we supported COPY folder events then that would be handled here but we
+  Note that if we supported COPY folder events then that would be handled here but we
   don't do that because of the inconsistencies it would introduce.
   Basically, the entire folder would have to have been seen before in order to
   truly identify a COPY folder event. In a real life practical scenario
@@ -734,9 +742,9 @@ Note that if we supported COPY folder events then that would be handled here but
   bits and pieces as an entire folder tree and base our copy decisions on that which is
   wrong.
 
-Anyway, long story short, if we want to support it we'd need another index which takes 
+  Anyway, long story short, if we want to support it we'd need another index which takes 
   time which would make this code even more complicated then it already is.
- */
+*/
 void simplify_state (t_algo_state& state) {
 
   // std::cout << "SIM - Simplifying state." << std::endl;
@@ -768,9 +776,8 @@ void simplify_state (t_algo_state& state) {
 
 
 /*******************************************************************************
- * The rest
+ * I/O
  ******************************************************************************/
-
 
 void print_state (t_algo_state& state) {
   for (t_event_it it = state.events.begin(); it != state.events.end(); ++it) {
@@ -778,6 +785,50 @@ void print_state (t_algo_state& state) {
   }
 }
 
+//! Reads the events from std in as specified by the challenge's spec.
+void read_events (t_algo_state& state) {
+  static const std::string ADD_EV = "ADD";
+  static const std::string DEL_EV = "DEL";
+
+  int nb_events;
+  std::cin >> nb_events;
+  
+  for (int i = 0; i < nb_events; ++i) {
+    char buffer [255];
+
+    std::string ev_name;
+    std::cin >> ev_name;
+
+    long timestamp;
+    std::cin >> timestamp;
+
+    std::string raw_path;
+    std::cin >> raw_path;
+    t_path path = make_path(raw_path);
+
+    t_hash hash;
+    std::cin >> hash;
+
+    t_file_type file_type = hash == NULL_HASH ? e_folder : e_file;
+
+    p_event ev;
+    if (ev_name == ADD_EV)
+      ev = new t_event_new (file_type, timestamp, path, hash);
+    else if (ev_name == DEL_EV)
+      ev = new t_event_delete (file_type, timestamp, path, hash);
+    else
+      assert(false && "Unknown event");
+
+    // ev->print();
+
+    add_to_state(state, ev);
+  }
+}
+
+
+/*******************************************************************************
+ * Tests
+ ******************************************************************************/
 
 void run_tests() {
 
@@ -849,47 +900,6 @@ void run_tests() {
 }
 
 
-//! Reads the events from std in as specified by the challenge's spec.
-void read_events (t_algo_state& state) {
-  static const std::string ADD_EV = "ADD";
-  static const std::string DEL_EV = "DEL";
-
-  int nb_events;
-  std::cin >> nb_events;
-  
-  for (int i = 0; i < nb_events; ++i) {
-    char buffer [255];
-
-    std::string ev_name;
-    std::cin >> ev_name;
-
-    long timestamp;
-    std::cin >> timestamp;
-
-    std::string raw_path;
-    std::cin >> raw_path;
-    t_path path = make_path(raw_path);
-
-    t_hash hash;
-    std::cin >> hash;
-
-    t_file_type file_type = hash == NULL_HASH ? e_folder : e_file;
-
-    p_event ev;
-    if (ev_name == ADD_EV)
-      ev = new t_event_new (file_type, timestamp, path, hash);
-    else if (ev_name == DEL_EV)
-      ev = new t_event_delete (file_type, timestamp, path, hash);
-    else
-      assert(false && "Unknown event");
-
-    // ev->print();
-
-    add_to_state(state, ev);
-  }
-}
-
-
 /*******************************************************************************
  * Path manipulation utilities
  ******************************************************************************/
@@ -906,10 +916,12 @@ std::string path_to_string (const t_path_cit start, const t_path_cit end) {
   return ss.str();
 }
 
+
 //! Converts a path to it's string representation.
 std::string path_to_string (const t_path& path) {
   return path_to_string(path.begin(), path.end());
 }
+
 
 //! Converts a string into a path object.
 t_path make_path (const std::string& raw_path) {
@@ -935,16 +947,19 @@ t_path make_path (const std::string& raw_path) {
   return path;
 }
 
+
 //! Returns the tail of the path object.
 std::string get_name (const t_path& path) {
   return *path.rbegin();
 }
+
 
 //! Returns everything but the tail of the path.
 t_path get_parent (const t_path& path) {
   assert (!path.empty());
   return t_path(path.begin(), dec(path.end()));
 }
+
 
 //! Used to compare two paths together.
 bool operator== (const t_path& lhs, const t_path& rhs) {
@@ -977,6 +992,7 @@ t_event_it remove_event (t_algo_state& state, t_event_it it) {
   delete ev; // Should really be handled by boost::shared_ptr...
   return next_it;
 }
+
 
 //! Deletes every events from the list that are between the two iterators.
 t_event_it remove_event (t_algo_state& state, t_event_it start, t_event_it end) {
@@ -1011,8 +1027,8 @@ void print_index (t_algo_state& state) {
     std:: cout << "(" << it->first << ", " << path_to_string(it->second) << ") ";
   }
   std::cout << std::endl;
- 
 }
+
 
 void remove_from_index (t_algo_state& state, const t_hash& key, const t_path& value){
   std::pair<t_index_it, t_index_it> range = state.hash_index.equal_range(key);
@@ -1026,6 +1042,4 @@ void remove_from_index (t_algo_state& state, const t_hash& key, const t_path& va
     }
   }
 }
-
-
 
