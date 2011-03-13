@@ -3,27 +3,31 @@ this URL:
 
      http://www.dropbox.com/jobs/challenges
 
+Note that these are all homebrewed solutions so I'm pretty sure that there exists some 
+better solutions for these problems (especially for the rectangle packing problem).
+On the other hand, looking up solutions wouldn't be very fun or challenging :)
+
 The project is built using a barebone CMake configuration so the following lines will
 build everything for you:
     
     cmake CMakeLists.txt
     make
 
-This will generate the three executable for each challenge :
+This will generate all the three solutions to the challenges :
      
     boxpack -> First challenge
     filevents -> Second challenge
     diet -> Third challenge
 
-Just execute them with input from the command line, just execute them as is. The
-executables also contains some tests that can be run by adding any arguments.
+To run the solutions using command line inputs, just run them as is. The executables 
+also contains some tests that can be run by appending any arguments:
 
     ./boxpack 1
     ./filevents 1
     ./diet 1
 
-Note that both the boxpack and the diet solution have extra debugging information that
-are dumped into the std err stream. These can be filtered out like so:
+Note that both the boxpack and the diet solutions have extra debugging information that
+are dumped into the std err stream. These can be filtered out like so (in linux):
 
     ./boxpack 1 2> /dev/null
     ./diet 1 2> /dev/null
