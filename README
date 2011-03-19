@@ -7,8 +7,11 @@ Note that these are all homebrewed solutions so I'm pretty sure that there exist
 better solutions for these problems (especially for the rectangle packing problem).
 On the other hand, looking up solutions wouldn't be very fun or challenging :)
 
+Also note that that the focus was on writting a quick prototype for a given algorithm.
+As you might expect this done at the expanse of code quality and performance.
+
 The project is built using a barebone CMake configuration so the following lines will
-build everything for you:
+build everything for you (assuming that you have cmake installed):
     
     cmake CMakeLists.txt
     make

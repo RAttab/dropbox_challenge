@@ -11,8 +11,8 @@ First of all the tallest block is placed and will serve as the maximum height
 of our bin. After that we proceed in two steps:
 
   1) Append the tallest block at the end of the bin.
-  2) Look for any free space to add blocks and keep doing so until there's
-     no more space.
+  2) Look for any free spaces in the bin where we could add a box and keep 
+     doing so until there's no more space.
 
 Step 1) is a straight forward greedy algorithm. This is also the only step
 that influences the size of the bin.
@@ -37,8 +37,8 @@ then the O(2^n) naive algo and much nicer results then the various
 greedy algos.
 
 Note that this algorithm could be improved further by using unbounded 
-height as well as width for the free boxes. This would allow use to
-grow our bin both dimensions. This would also require an heuristique
+height as well as width for the free boxes. This would allow us to
+grow our bin in both dimensions but would also require an heuristic
 to determine when to grow horrizontally. This would allow us to also
 expand our solution to other problem type like texture packing.
  */
