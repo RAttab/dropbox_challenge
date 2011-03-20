@@ -1,14 +1,14 @@
-This project all three solutions to the dropbox challenges. The questions can be found at
-this URL: 
+This project contains all three solutions to the dropbox challenges. The questions can be 
+found at this URL: 
 
      http://www.dropbox.com/jobs/challenges
 
-Note that these are all homebrewed solutions so I'm pretty sure that there exists some 
+Note that these are all homebrewed solutions and I'm pretty sure that there exists some 
 better solutions for these problems (especially for the rectangle packing problem).
 On the other hand, looking up solutions wouldn't be very fun or challenging :)
 
 Also note that that the focus was on writting a quick prototype for a given algorithm.
-As you might expect this done at the expanse of code quality and performance.
+As you might expect this was done at the expense of code quality and performance.
 
 The project is built using a barebone CMake configuration so the following lines will
 build everything for you (assuming that you have cmake installed):
@@ -16,14 +16,19 @@ build everything for you (assuming that you have cmake installed):
     cmake CMakeLists.txt
     make
 
-This will generate all the three solutions to the challenges :
+This will generate an executable per challenge:
      
     boxpack -> First challenge
     filevents -> Second challenge
     diet -> Third challenge
 
-To run the solutions using command line inputs, just run them as is. The executables 
-also contains some tests that can be run by appending any arguments:
+To run the solutions using command line inputs, just run them as is:
+
+   ./boxpack
+   ./filevents
+   ./diet
+
+The executables also contain some tests that can be run by appending any arguments:
 
     ./boxpack 1
     ./filevents 1
@@ -32,7 +37,7 @@ also contains some tests that can be run by appending any arguments:
 Note that both the boxpack and the diet solutions have extra debugging information that
 are dumped into the std err stream. These can be filtered out like so (in linux):
 
-    ./boxpack 1 2> /dev/null
-    ./diet 1 2> /dev/null
+    ./boxpack 2> /dev/null
+    ./diet 2> /dev/null
 
 The code is provided under the FreeBSD license. See the LICENSE file for full details.

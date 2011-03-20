@@ -897,6 +897,28 @@ void run_tests() {
     print_state(s);
   }
 
+
+  // Provided examples.
+  {
+    std::cout << std::endl << " === TEST DROPBOX ===" << std::endl;
+
+    t_algo_state s;
+    long ts = 0;
+
+    add_to_state(s, new t_event_new(e_folder, ++ts, make_path("/test")));
+    add_to_state(s, new t_event_new(e_file, ++ts, make_path("/test/1.txt"), "f2fa762f"));
+
+    add_to_state(s, new t_event_delete(e_file, ++ts, make_path("/test/1.txt"), "f2fa762f"));
+    add_to_state(s, new t_event_delete(e_folder, ++ts, make_path("/test")));
+
+    add_to_state(s, new t_event_new(e_folder, ++ts, make_path("/test2")));
+    add_to_state(s, new t_event_new(e_file, ++ts, make_path("/test2/1.txt"), "f2fa762f"));
+
+    simplify_state(s);
+    std::cout << std::endl;
+    print_state(s);    
+  }
+
 }
 
 
